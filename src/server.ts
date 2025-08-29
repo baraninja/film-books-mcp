@@ -17,6 +17,7 @@ import { registerOmdbSearch } from './tools/omdb/search.js';
 import { registerOmdbById } from './tools/omdb/byId.js';
 import { registerLibrisXsearch } from './tools/libris/xsearch.js';
 import { registerLibrisOai } from './tools/libris/oaiListRecords.js';
+import { registerCombinedSearch } from './tools/combined/searchAcross.js';
 
 // Resources
 import { registerOpenLibraryResources } from './resources/openlibrary.js';
@@ -45,6 +46,9 @@ async function main() {
   registerOmdbById(server);
   registerLibrisXsearch(server);
   registerLibrisOai(server);
+  
+  // Register combined search tools
+  registerCombinedSearch(server);
 
   // Register resources
   registerOpenLibraryResources(server);
