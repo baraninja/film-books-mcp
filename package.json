@@ -1,0 +1,29 @@
+{
+  "name": "books-film-mcp",
+  "version": "0.1.0",
+  "description": "MCP server exposing tools & resources for books and films (Open Library, Google Books, OpenAlex, Crossref, TMDb, OMDb, LIBRIS Xsearch & OAI-PMH).",
+  "private": true,
+  "type": "module",
+  "main": "dist/server.js",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "dev": "tsx watch src/server.ts",
+    "start": "node dist/server.js",
+    "pack:mcpb": "npm run build && mcpb pack --output ./books-film-mcp.mcpb",
+    "lint": "eslint ."
+  },
+  "bin": {
+    "books-film-mcp": "dist/server.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.4",
+    "zod": "^3.23.8",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.12",
+    "tsx": "^4.16.0",
+    "typescript": "^5.5.4",
+    "eslint": "^9.8.0"
+  }
+}

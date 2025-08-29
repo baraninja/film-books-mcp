@@ -1,0 +1,20 @@
+{
+  "name": "books-film-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for books, film and scholarly metadata (Open Library, Google Books, OpenAlex, Crossref, TMDb, OMDb, LIBRIS)",
+  "icon": "",
+  "server": {
+    "command": "node",
+    "args": ["dist/server.js"],
+    "entry_point": "dist/server.js",
+    "transport": "stdio"
+  },
+  "env": {
+    "TMDB_ACCESS_TOKEN": { "description": "TMDb v4 access token", "required": false },
+    "TMDB_API_KEY": { "description": "TMDb v3 api_key (fallback if no v4 token)", "required": false },
+    "OMDB_API_KEY": { "description": "OMDb API key", "required": true },
+    "GOOGLE_BOOKS_API_KEY": { "description": "Google Books API key (optional, quota)", "required": false },
+    "CROSSREF_MAILTO": { "description": "Email for Crossref polite pool", "required": false },
+    "USER_AGENT_EXTRA": { "description": "UA string to send (includes repository link)", "required": false }
+  }
+}
