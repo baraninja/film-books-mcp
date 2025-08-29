@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { searchWorks, type CrossrefSearchParams } from '../../clients/crossref.js';
+import { formatCrossrefResponse, formatSearchResults } from '../../utils/formatters.js';
 
 export function registerCrossrefSearch(server: McpServer) {
   server.registerTool(
@@ -34,21 +35,31 @@ export function registerCrossrefSearch(server: McpServer) {
         rows: z.number().int().positive().max(1000).optional().describe('Number of results (max 1000)'),
         offset: z.number().int().nonnegative().optional().describe('Offset for pagination'),
         sort: z.enum(['relevance', 'score', 'updated', 'deposited', 'indexed', 'published', 'published-print', 'published-online']).optional().describe('Sort order'),
-        order: z.enum(['asc', 'desc']).optional().describe('Sort direction')
+        order: z.enum(['asc', 'desc']).optional().describe('Sort direction'),
+        // Result formatting
+        summaryMode: z.boolean().default(true).describe('Return simplified results (default: true) or full detailed results'),
+        formatAsText: z.boolean().default(false).describe('Format results as readable text instead of JSON')
       }
     },
     async (input) => {
-      const params = input as CrossrefSearchParams;
+      const { summaryMode = true, formatAsText = false, ...searchParams } = input as CrossrefSearchParams & { summaryMode?: boolean; formatAsText?: boolean };
       
       // Ensure at least one search parameter is provided
-      if (!params.query && !params.filter && !params.queryTitle && !params.queryAuthor && 
-          !params.queryContainerTitle && !params.queryPublisher && !params.querySubject &&
-          !params.type && !params.fromPubDate && !params.untilPubDate) {
+      if (!searchParams.query && !searchParams.filter && !searchParams.queryTitle && !searchParams.queryAuthor && 
+          !searchParams.queryContainerTitle && !searchParams.queryPublisher && !searchParams.querySubject &&
+          !searchParams.type && !searchParams.fromPubDate && !searchParams.untilPubDate) {
         throw new Error('At least one search parameter must be provided');
       }
       
-      const data = await searchWorks(params);
-      return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+      const rawData = await searchWorks(searchParams);
+      const formattedData = formatCrossrefResponse(rawData, summaryMode);
+      
+      if (formatAsText) {
+        const textOutput = formatSearchResults(formattedData, 'Crossref');
+        return { content: [{ type: 'text', text: textOutput }] };
+      }
+      
+      return { content: [{ type: 'text', text: JSON.stringify(formattedData, null, 2) }] };
     }
   );
 }

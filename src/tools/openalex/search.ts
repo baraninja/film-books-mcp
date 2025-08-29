@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { searchWorks, type OpenAlexSearchParams } from '../../clients/openalex.js';
+import { formatOpenAlexResponse, formatSearchResults } from '../../utils/formatters.js';
 
 export function registerOpenAlexSearch(server: McpServer) {
   server.registerTool(
@@ -27,21 +28,31 @@ export function registerOpenAlexSearch(server: McpServer) {
         // API parameters
         perPage: z.number().int().positive().max(200).optional().describe('Results per page (max 200)'),
         page: z.number().int().positive().optional().describe('Page number for pagination'),
-        sort: z.enum(['cited_by_count:desc', 'publication_date:desc', 'relevance_score:desc']).optional().describe('Sort order')
+        sort: z.enum(['cited_by_count:desc', 'publication_date:desc', 'relevance_score:desc']).optional().describe('Sort order'),
+        // Result formatting
+        summaryMode: z.boolean().default(true).describe('Return simplified results (default: true) or full detailed results'),
+        formatAsText: z.boolean().default(false).describe('Format results as readable text instead of JSON')
       }
     },
     async (input) => {
-      const params = input as OpenAlexSearchParams;
+      const { summaryMode = true, formatAsText = false, ...searchParams } = input as OpenAlexSearchParams & { summaryMode?: boolean; formatAsText?: boolean };
       
       // Ensure at least one search parameter is provided
-      if (!params.search && !params.filter && !params.authorId && !params.institutionId && 
-          !params.conceptId && !params.publicationYear && !params.publicationYearRange &&
-          !params.journalId && !params.type && !params.language && !params.citedByCount) {
+      if (!searchParams.search && !searchParams.filter && !searchParams.authorId && !searchParams.institutionId && 
+          !searchParams.conceptId && !searchParams.publicationYear && !searchParams.publicationYearRange &&
+          !searchParams.journalId && !searchParams.type && !searchParams.language && !searchParams.citedByCount) {
         throw new Error('At least one search parameter must be provided');
       }
       
-      const data = await searchWorks(params);
-      return { content: [{ type: 'text', text: JSON.stringify(data, null, 2) }] };
+      const rawData = await searchWorks(searchParams);
+      const formattedData = formatOpenAlexResponse(rawData, summaryMode);
+      
+      if (formatAsText) {
+        const textOutput = formatSearchResults(formattedData, 'OpenAlex');
+        return { content: [{ type: 'text', text: textOutput }] };
+      }
+      
+      return { content: [{ type: 'text', text: JSON.stringify(formattedData, null, 2) }] };
     }
   );
 }
